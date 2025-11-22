@@ -136,7 +136,7 @@ const MentalHealthDashboard = () => {
       console.log('Token found:', token ? 'Yes' : 'No');
 
       // Fetch mood statistics and trends
-      const statsUrl = `${BACKEND_URL || 'http://localhost:5000'}/api/mental-health/mood/stats?days=${timeRangeToDays[timeRange]}`;
+      const statsUrl = `${BACKEND_URL}/api/mental-health/mood/stats?days=${timeRangeToDays[timeRange]}`;
       console.log('Fetching from:', statsUrl);
 
       let statsResponse;
@@ -166,7 +166,7 @@ const MentalHealthDashboard = () => {
       }
 
       // Fetch insights
-      const insightsUrl = `${BACKEND_URL || 'http://localhost:5000'}/api/mental-health/insights?days=${timeRangeToDays[timeRange]}`;
+      const insightsUrl = `${BACKEND_URL}/api/mental-health/insights?days=${timeRangeToDays[timeRange]}`;
       console.log('Fetching insights from:', insightsUrl);
       
       let insightsResponse;
@@ -205,7 +205,7 @@ const MentalHealthDashboard = () => {
 
       // Fetch mood map data
       try {
-        const moodMapUrl = `${BACKEND_URL || 'http://localhost:5000'}/api/mental-health/mood-map?days=${timeRangeToDays[timeRange]}`;
+        const moodMapUrl = `${BACKEND_URL}/api/mental-health/mood-map?days=${timeRangeToDays[timeRange]}`;
         const moodMapResponse = await axios.get(moodMapUrl, {
           withCredentials: true,
           headers: {
@@ -223,7 +223,7 @@ const MentalHealthDashboard = () => {
 
       // Fetch current mood
       try {
-        const currentMoodUrl = `${BACKEND_URL || 'http://localhost:5000'}/api/mood-detection/current`;
+        const currentMoodUrl = `${BACKEND_URL}/api/mood-detection/current`;
         const currentMoodResponse = await axios.get(currentMoodUrl, {
           withCredentials: true,
           headers: {
