@@ -6,8 +6,6 @@ import { BrowserRouter } from "react-router-dom";
 import { AppProvider } from "./Context/AppContext.jsx";
 import { SocketProvider } from "./CameraSecurity/context/SocketProvider.jsx";
 
-console.log("DEBUG: VITE_BACKEND_URL =", import.meta.env.VITE_BACKEND_URL);
-
 createRoot(document.getElementById("root")).render(
   <>
     <BrowserRouter>

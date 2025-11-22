@@ -36,6 +36,7 @@ app.use(cors({
         // Allowed origins for production and development
         const allowedOrigins = [
             'https://mental-health-theta-woad.vercel.app',  // Production frontend
+            'https://mental-health-two-kohl.vercel.app',    // New Production frontend
             'https://mental-health-3-0ydf.onrender.com',    // Production backend
             'http://localhost:5173',                         // Local development
             'https://localhost:5173',
@@ -69,6 +70,7 @@ const io = new Server(server, {
     cors: {
         origin: [
             'https://mental-health-theta-woad.vercel.app',
+            'https://mental-health-two-kohl.vercel.app',
             'https://mental-health-3-0ydf.onrender.com',
             'http://localhost:5173',
             'https://localhost:5173',
