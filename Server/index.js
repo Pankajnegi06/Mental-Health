@@ -30,24 +30,26 @@ app.use(express.urlencoded({ extended: true }));
 // Parse cookies
 app.use(cookieParser());
 
-// CORS configuration - more permissive for development
+// CORS configuration - allow production and development URLs
 app.use(cors({
     origin: function (origin, callback) {
-        // In development, allow all origins
-        if (process.env.NODE_ENV !== 'production') {
+        // Allowed origins for production and development
+        const allowedOrigins = [
+            'https://mental-health-theta-woad.vercel.app',  // Production frontend
+            'https://mental-health-3-0ydf.onrender.com',    // Production backend
+            'http://localhost:5173',                         // Local development
+            'https://localhost:5173',
+            'http://127.0.0.1:5173',
+            'http://localhost:5000',
+            process.env.FRONTEND_URL                         // Environment variable
+        ].filter(Boolean); // Remove undefined values
+        
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin) {
             return callback(null, true);
         }
         
-        // In production, only allow specific origins
-        const allowedOrigins = [
-            process.env.FRONTEND_URL,
-            'http://localhost:5173',
-            'https://localhost:5173',
-            'http://127.0.0.1:5173'
-        ];
-        
-        // Allow requests with no origin (like mobile apps, curl)
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
         
@@ -65,7 +67,14 @@ connectDB();
 
 const io = new Server(server, {
     cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        origin: [
+            'https://mental-health-theta-woad.vercel.app',
+            'https://mental-health-3-0ydf.onrender.com',
+            'http://localhost:5173',
+            'https://localhost:5173',
+            'http://127.0.0.1:5173',
+            process.env.FRONTEND_URL
+        ].filter(Boolean),
         methods: ["GET", "POST"],
         credentials: true // 👈 this is REQUIRED to allow cookies
     }
