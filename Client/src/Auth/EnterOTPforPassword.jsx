@@ -23,7 +23,7 @@ const EnterOTPforPassword = ({ isLightMode, setisLightMode }) => {
         // console.log(`Email sent to Backend to send OTP for reset Password`);
         toast.success("Email submitted. Please check your inbox.");
         localStorage.setItem("registeredEmail", email);
-        Navigate("/EnterOTPforPassword");
+        Navigate("/otp-verification");
       })
       .catch((e) => {
         // console.log(
@@ -53,11 +53,11 @@ const EnterOTPforPassword = ({ isLightMode, setisLightMode }) => {
         // console.log(`Sent to Backend`);
         // console.log(res.data);
         if (res.data.status === 1) {
-          Navigate("/ResetPassword");
+          Navigate("/reset-password");
         } else {
           setOtp("");
           toast.error("OTP is incorrect");
-          Navigate("/EnterOTPforPassword");
+          Navigate("/otp-verification");
         }
       })
       .catch((e) => {

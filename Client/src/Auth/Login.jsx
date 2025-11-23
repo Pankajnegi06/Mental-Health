@@ -6,7 +6,7 @@ import { FiMail, FiLock } from "react-icons/fi";
 import { useAppContext } from "../Context/AppContext";
 
 const Login = ({ isLightMode, setisLightMode }) => {
-  const { BACKEND_URL, setisLoggedIn, isLoggedIn, userData, getUserData } = useAppContext();
+  const { BACKEND_URL, setIsLoggedIn, isLoggedIn, userData, getUserData } = useAppContext();
   const Navigate = useNavigate();
   const location = useLocation();
 
@@ -20,29 +20,32 @@ const Login = ({ isLightMode, setisLightMode }) => {
       .then((res) => {
         setFormdata({ email: "", password: "" });
         if (res.data.status === 0) {
-          setisLoggedIn(false);
-          // Navigate("/RegisterPage"); // Removed invalid redirect
+          setIsLoggedIn(false);
           toast.error(res.data.message || "Login failed");
+          return; // Stop execution here
+        }
+        
+        // Success case
+        toast.success("Login Successfully...");
+        // Store token in localStorage
+        if (res.data.token) {
+          localStorage.setItem("token", res.data.token);
+        }
+        getUserData();
+        setIsLoggedIn(true);
+        
+        // Check if redirected from questionnaire
+        if (location.state?.fromQuestionnaire) {
+          // Redirect to Dashboard to view detailed reports
+          Navigate("/Dashboard");
         } else {
-          toast.success("Login Successfully...");
-          // Store token in localStorage
-          if (res.data.token) {
-            localStorage.setItem("token", res.data.token);
-          }
-          getUserData();
-          setisLoggedIn(true);
-          
-          // Check if redirected from questionnaire
-          if (location.state?.fromQuestionnaire) {
-            // Redirect to Dashboard to view detailed reports
-            Navigate("/Dashboard");
-          } else {
-            Navigate("/home");
-          }
+          Navigate("/home");
         }
       })
-      .catch(() => {
-        toast.error("Login failed. Please try again.");
+      .catch((error) => {
+        console.error("Login error:", error);
+        toast.error(error.response?.data?.message || "Network error. Please try again.");
+        setIsLoggedIn(false);
       });
   }
 

@@ -5,7 +5,7 @@ import axios from "axios";
 import { useEffect } from "react";
 
 const Profile = ({ name }) => {
-  const { BACKEND_URL, setisLoggedIn, setUserData, getUserData, userData } = useAppContext();
+  const { BACKEND_URL, setIsLoggedIn, setUserData, getUserData, userData } = useAppContext();
   const [showOptions, setShowOptions] = useState(false);
   const navigate = useNavigate();
 
@@ -20,7 +20,7 @@ const Profile = ({ name }) => {
       localStorage.clear();
       
       // Update app state
-      setisLoggedIn(false);
+      setIsLoggedIn(false);
       setUserData(null);
       
       // Navigate to home
@@ -29,7 +29,7 @@ const Profile = ({ name }) => {
       console.error("Logout error:", err);
       // Even if backend fails, clear local data
       localStorage.clear();
-      setisLoggedIn(false);
+      setIsLoggedIn(false);
       setUserData(null);
       navigate("/");
     }

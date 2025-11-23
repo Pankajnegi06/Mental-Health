@@ -314,13 +314,32 @@ const getRecordById = async (req, res) => {
       });
     }
 
-    const record = await HealthRecord.findOne({ _id: id, user: userId });
+    let record = await HealthRecord.findOne({ _id: id, user: userId });
     
     if (!record) {
       return res.status(404).json({
         success: false,
         message: "Health record not found"
       });
+    }
+
+    // Regenerate insights if missing (for old records)
+    if (!record.insights && (record.healthMetrics || record.medications?.length > 0 || record.extractedText)) {
+      console.log('🔄 Regenerating insights for record:', record._id);
+      const aiInsights = generateHealthSummary(
+        record.healthMetrics || {},
+        record.medications || [],
+        record.extractedText || ''
+      );
+      
+      // Update the record with new insights
+      record.insights = aiInsights;
+      if (!record.summary || record.summary === "Document text extracted, but no specific health data identified.") {
+        record.summary = aiInsights.overview;
+      }
+      
+      await record.save();
+      console.log('✅ Insights regenerated successfully');
     }
 
     return res.status(200).json({

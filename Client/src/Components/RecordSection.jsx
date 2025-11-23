@@ -591,7 +591,7 @@ const RecordSection = () => {
                   )}
 
                   {/* AI Insights Section */}
-                  {selectedRecord.insights && (
+                  {selectedRecord.insights ? (
                     <div className="mt-6 space-y-4">
                       {/* Health Status Badge */}
                       <div className={`p-4 rounded-xl border-2 ${
@@ -665,6 +665,16 @@ const RecordSection = () => {
                           </ul>
                         </div>
                       )}
+                    </div>
+                  ) : (
+                    <div className="mt-6 bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+                      <p className="text-gray-600 text-sm mb-2">
+                        <span className="text-2xl mb-2 block">🤖</span>
+                        AI insights are being generated for this record.
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        Refresh the analysis to see personalized health suggestions.
+                      </p>
                     </div>
                   )}
                 </>

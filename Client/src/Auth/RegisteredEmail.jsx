@@ -16,7 +16,7 @@ const RegisteredEmail = ({ isLightMode, setisLightMode }) => {
         // console.log(`Email sent to Backend to send OTP for reset Password`);
         toast.success("Email submitted. Please check your inbox.");
         localStorage.setItem("registeredEmail", email);
-        Navigate("/EnterOTPforPassword");
+        Navigate("/otp-verification");
       })
       .catch((e) => {
         // console.log(`Email was not sent to backend.`);

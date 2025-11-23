@@ -1,3 +1,6 @@
+// Load environment variables FIRST before any other imports
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const router = require("./Routers/getAddressRouter");
@@ -19,7 +22,6 @@ const QuestionnaireRouter = require("./Routers/QuestionnaireRoutes");
 const mentalHealthRouter = require("./Routers/mentalHealthRoutes");
 const moodDetectionRouter = require("./Routers/moodDetectionRoutes");
 
-require("dotenv").config();
 
 // Parse JSON bodies
 app.use(express.json());

@@ -9,7 +9,7 @@ import axios from "axios";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, userData, setisLoggedIn, setUserData, BACKEND_URL } = useAppContext();
+  const { isLoggedIn, userData, setIsLoggedIn, setUserData, BACKEND_URL } = useAppContext();
   const [isMenuOpen, setMenuOpen] = useState(false);
 
   const menuItems = [
@@ -38,7 +38,7 @@ const Navbar = () => {
   const logout = async () => {
     try {
       await axios.post(`${BACKEND_URL}/api/auth/logout`, {}, { withCredentials: true });
-      setisLoggedIn(false);
+      setIsLoggedIn(false);
       setUserData(null);
       localStorage.removeItem("token");
       localStorage.removeItem("userId");

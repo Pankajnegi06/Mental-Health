@@ -4,11 +4,19 @@ require('dotenv').config();
 
 const createTransporter = (user, pass) => {
     if (!user || !pass) {
-        console.warn("SMTP credentials missing. Email sending will be disabled.");
+        console.warn("⚠️  SMTP credentials missing. Using mock email sender for development.");
+        console.warn("📧 To enable real emails, add SMTP_USER and SMTP_PASS to your .env file");
         return {
-            sendMail: async () => {
-                console.warn("Mock sending email (credentials missing)");
-                return true;
+            sendMail: async (mailOptions) => {
+                console.log("\n📨 [MOCK EMAIL] Would send email:");
+                console.log("  To:", mailOptions.to);
+                console.log("  Subject:", mailOptions.subject);
+                console.log("  From:", mailOptions.from);
+                if (mailOptions.text) {
+                    console.log("  Text:", mailOptions.text.substring(0, 100) + "...");
+                }
+                console.log("✅ Mock email sent successfully\n");
+                return { messageId: 'mock-' + Date.now() };
             }
         };
     }
