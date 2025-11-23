@@ -1,7 +1,7 @@
 const MoodDetection = require('../Models/MoodDetectionSchema');
 const axios = require('axios');
 
-// Analyze mood from image using Groq AI
+// Analyze mood from image using Gemini AI
 const analyzeMood = async (req, res) => {
   try {
     const { imageData } = req.body;
@@ -16,9 +16,17 @@ const analyzeMood = async (req, res) => {
 
     console.log('Analyzing mood for user:', userId);
 
-    // Prepare AI prompt for mood detection
-    const prompt = `Analyze this person's facial expression and determine their emotional state. 
-Provide a JSON response with the following structure:
+    // Extract base64 data from data URL
+    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+
+    // Prepare Gemini API request
+    const geminiResponse = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        contents: [{
+          parts: [
+            {
+              text: `Analyze this person's facial expression and determine their emotional state. Provide a JSON response with this exact structure:
 {
   "primaryEmotion": "one of: happy, sad, anxious, angry, neutral, surprised, fearful, excited, tired, stressed",
   "confidence": 85,
@@ -30,45 +38,33 @@ Provide a JSON response with the following structure:
     "summary": "Based on your current mood, consider taking a moment to relax and practice self-care."
   }
 }
-
-Analyze the image and respond ONLY with valid JSON, no additional text.`;
-
-    // Call Groq AI API with vision model
-    const groqResponse = await axios.post(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        model: 'llama-3.2-90b-vision-preview',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { 
-                type: 'text', 
-                text: prompt 
-              },
-              { 
-                type: 'image_url', 
-                image_url: { 
-                  url: imageData 
-                } 
+Respond ONLY with valid JSON, no additional text.`
+            },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: base64Data
               }
-            ]
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1024,
-        top_p: 1
+            }
+          ]
+        }]
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         }
       }
     );
 
-    const aiResponse = groqResponse.data.choices[0]?.message?.content;
+    const aiResponse = geminiResponse.data.candidates[0]?.content?.parts[0]?.text;
     console.log('AI Response:', aiResponse);
+
+    if (!aiResponse) {
+      return res.status(500).json({
+        status: 0,
+        message: 'No response from AI'
+      });
+    }
 
     // Parse AI response
     let moodData;
@@ -85,7 +81,8 @@ Analyze the image and respond ONLY with valid JSON, no additional text.`;
       return res.status(500).json({
         status: 0,
         message: 'Failed to parse mood analysis',
-        error: parseError.message
+        error: parseError.message,
+        aiResponse: aiResponse
       });
     }
 
@@ -122,7 +119,7 @@ Analyze the image and respond ONLY with valid JSON, no additional text.`;
     return res.status(500).json({
       status: 0,
       message: 'Failed to analyze mood',
-      error: error.message
+      error: error.response?.data?.error?.message || error.message
     });
   }
 };
