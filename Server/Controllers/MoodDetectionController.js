@@ -33,24 +33,31 @@ Provide a JSON response with the following structure:
 
 Analyze the image and respond ONLY with valid JSON, no additional text.`;
 
-    // Call Groq AI API
+    // Call Groq AI API with vision model
     const groqResponse = await axios.post(
-      process.env.GROQ_LINK || 'https://api.groq.com/openai/v1/chat/completions',
+      'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'llama-3.2-90b-vision-preview',
         messages: [
           {
             role: 'user',
             content: [
-              { type: 'text', text: prompt },
-              { type: 'image_url', image_url: { url: imageData } }
+              { 
+                type: 'text', 
+                text: prompt 
+              },
+              { 
+                type: 'image_url', 
+                image_url: { 
+                  url: imageData 
+                } 
+              }
             ]
           }
         ],
         temperature: 0.7,
-        max_completion_tokens: 1024,
-        top_p: 1,
-        stream: false
+        max_tokens: 1024,
+        top_p: 1
       },
       {
         headers: {
