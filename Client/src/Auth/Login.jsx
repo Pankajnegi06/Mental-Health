@@ -21,7 +21,8 @@ const Login = ({ isLightMode, setisLightMode }) => {
         setFormdata({ email: "", password: "" });
         if (res.data.status === 0) {
           setisLoggedIn(false);
-          Navigate("/RegisterPage");
+          // Navigate("/RegisterPage"); // Removed invalid redirect
+          toast.error(res.data.message || "Login failed");
         } else {
           toast.success("Login Successfully...");
           // Store token in localStorage

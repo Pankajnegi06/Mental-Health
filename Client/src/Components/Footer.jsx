@@ -27,26 +27,7 @@ const Footer = () => {
 
           {/* Social Icons */}
           <div className="flex items-center gap-4 mt-2 sm:mt-0">
-            <FaGithub
-              className="text-slate-200 hover:text-white text-xl cursor-pointer"
-              onClick={() =>
-                window.open(
-                  "https://github.com/aditya-kumar-patraan1/",
-                  "_blank",
-                  "noopener,noreferrer"
-                )
-              }
-            />
-            <FaLinkedin
-              className="text-slate-200 hover:text-white text-xl cursor-pointer"
-              onClick={() =>
-                window.open(
-                  "https://www.linkedin.com/in/aditya-kumar--/",
-                  "_blank",
-                  "noopener,noreferrer"
-                )
-              }
-            />
+           
           </div>
         </div>
       </div>

@@ -40,7 +40,9 @@ const Navbar = () => {
       await axios.post(`${BACKEND_URL}/api/auth/logout`, {}, { withCredentials: true });
       setisLoggedIn(false);
       setUserData(null);
-      navigate("/");
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      navigate("/login");
     } catch (err) {
       console.error("Logout failed:", err);
     }

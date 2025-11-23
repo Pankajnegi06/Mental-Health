@@ -8,17 +8,7 @@ myRouter.post("/login", login);
 
 // Register route
 myRouter.post("/register", register);
-myRouter.post("/logout", (req, res) => {
-    // Clear the token cookie
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-    });
-    
-    // Call the original logout function
-    logout(req, res);
-});
+myRouter.post("/logout", logout);
 myRouter.post("/sendVerifyOTP", userAuth, sendVerifyOTP);
 myRouter.post("/verifyEmail", userAuth, verifyEmail);
 myRouter.get("/isAuthenticated", userAuth, isAuthenticated);
