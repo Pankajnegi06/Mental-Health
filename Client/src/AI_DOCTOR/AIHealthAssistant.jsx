@@ -1,15 +1,31 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { toast, Toaster } from "react-hot-toast";
+import { FiSend, FiImage, FiX, FiSmile } from "react-icons/fi";
 
 const AIHealthAssistant = () => {
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: "Hello! I'm your mental health assistant. How can I help you today? 😊",
+      timestamp: new Date()
+    }
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
   const [ImageURL, setImageURL] = useState(null);
-  const [isShowing, setIsShowing] = useState(false);
   const [ImageFile, setImageFile] = useState(null);
-  const [query, setQuery] = useState("");
-  const [output, setOutput] = useState(null);
-  const [processing, setProcessing] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
   const GROQLINK = import.meta.env.VITE_GROQ_LINK;
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const setFile = (e) => {
     const file = e.target.files[0];
@@ -17,234 +33,293 @@ const AIHealthAssistant = () => {
       const imgURL = URL.createObjectURL(file);
       setImageFile(file);
       setImageURL(imgURL);
+      toast.success("Image attached!");
     }
   };
 
-  const closeDown = () => {
-    setIsShowing(false);
+  const removeImage = () => {
     setImageURL(null);
     setImageFile(null);
+    toast.success("Image removed");
   };
 
-  const handleSubmit = async () => {
-    if (!query || !query.trim()) {
-      toast.error("Please type your health question.");
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() && !ImageFile) {
+      toast.error("Please type a message or attach an image");
       return;
     }
 
-    toast.success("Wait for the Response...");
-    setProcessing(true); // Start processing immediately
+    // Add user message to chat
+    const userMessage = {
+      role: "user",
+      content: inputMessage,
+      image: ImageURL,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage("");
+    setIsTyping(true);
 
     try {
-      // If an image is provided, include it. Otherwise, send text-only.
+      let payload;
+      
       if (ImageFile) {
         const reader = new FileReader();
         reader.readAsDataURL(ImageFile);
+        
         reader.onloadend = async () => {
           const base64Image = reader.result;
 
-          const payload = {
+          payload = {
             model: "meta-llama/llama-4-scout-17b-16e-instruct",
             messages: [
               {
                 role: "user",
                 content: [
-                  { type: "text", text: query },
+                  { type: "text", text: inputMessage || "Analyze this image" },
                   { type: "image_url", image_url: { url: base64Image } },
                 ],
               },
             ],
-            temperature: 1,
+            temperature: 0.8,
             max_completion_tokens: 1024,
             top_p: 1,
             stream: false,
           };
 
-          const response = await axios.post(
-            GROQLINK,
-            payload,
-            {
-              headers: {
-                Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          const response = await axios.post(GROQLINK, payload, {
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-          const answer = response.data.choices[0]?.message?.content;
-          setTimeout(() => {
-            setProcessing(false);
-          }, 3000);
-          setOutput(answer || "No response received.");
+          const answer = response.data.choices[0]?.message?.content || "No response received.";
+          
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: answer,
+            timestamp: new Date()
+          }]);
+          
+          setIsTyping(false);
+          removeImage();
         };
       } else {
-        // Text-only path
-        const payload = {
+        payload = {
           model: "meta-llama/llama-4-scout-17b-16e-instruct",
           messages: [
             {
               role: "user",
-              content: [
-                { type: "text", text: query },
-              ],
+              content: [{ type: "text", text: inputMessage }],
             },
           ],
-          temperature: 1,
+          temperature: 0.8,
           max_completion_tokens: 1024,
           top_p: 1,
           stream: false,
         };
 
-        const response = await axios.post(
-          GROQLINK,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await axios.post(GROQLINK, payload, {
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-        const answer = response.data.choices[0]?.message?.content;
-        setTimeout(() => {
-          setProcessing(false);
-        }, 3000);
-        setOutput(answer || "No response received.");
+        const answer = response.data.choices[0]?.message?.content || "No response received.";
+        
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: answer,
+          timestamp: new Date()
+        }]);
+        
+        setIsTyping(false);
       }
     } catch (err) {
-      setOutput("Model failed: " + err.message);
-      setProcessing(false); // End processing on error
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: "I'm sorry, I encountered an error. Please try again.",
+        timestamp: new Date()
+      }]);
+      setIsTyping(false);
+      toast.error("Failed to get response: " + err.message);
     }
   };
 
-return (
-  <div className="min-h-screen flex flex-col items-center justify-start p-6 bg-gray-100">
-    <Toaster />
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
-    {/* Heading */}
-    <h1 className="text-4xl sm:text-5xl font-bold text-center text-gray-900 mb-10">
-      StillMind
-    </h1>
+  const clearChat = () => {
+    setMessages([{
+      role: "assistant",
+      content: "Chat cleared! How can I help you? 😊",
+      timestamp: new Date()
+    }]);
+    toast.success("Chat cleared");
+  };
 
-    {/* Top Section */}
-    <div className="flex flex-col md:flex-row w-full gap-6 mb-10 max-w-5xl">
-      {/* Image Upload */}
-      <div className="bg-white w-full md:w-1/2 p-6 rounded-2xl shadow-md flex flex-col items-center justify-center">
-        {isShowing && (
-          <img
-            src={ImageURL}
-            alt="Preview"
-            className="rounded-xl max-h-64 mb-4"
-          />
-        )}
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <Toaster position="top-center" />
 
-        <div className="w-full">
-          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <svg className="w-8 h-8 mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
-              <p className="mb-2 text-sm text-gray-500">
-                <span className="font-semibold">Click to upload</span> or drag and drop
-              </p>
-              <p className="text-xs text-gray-500">
-                {ImageURL ? ImageFile.name : 'JPG, PNG, or PDF (MAX. 10MB)'}
-              </p>
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+              <FiSmile className="w-6 h-6 text-white" />
             </div>
-            <input 
-              type="file" 
-              className="hidden" 
-              accept="image/*"
-              onChange={setFile}
-            />
-          </label>
-          
-          {ImageURL && (
-            <div className="mt-2 flex items-center justify-between bg-blue-50 p-2 rounded-md">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                </svg>
-                <span className="text-sm text-gray-700">{ImageFile.name}</span>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">StillMind Assistant</h1>
+              <p className="text-xs text-gray-500">Your mental health companion</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.location.href = '/mood-detector'}
+              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+            >
+              😊 Detect Mood
+            </button>
+            <button
+              onClick={clearChat}
+              className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
+            >
+              Clear Chat
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                  message.role === 'user'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-800 shadow-md border border-gray-100'
+                }`}
+              >
+                {message.image && (
+                  <img
+                    src={message.image}
+                    alt="Attached"
+                    className="rounded-lg mb-2 max-h-48 object-cover"
+                  />
+                )}
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-indigo-200' : 'text-gray-400'}`}>
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
-              <div className="flex space-x-2">
-                <button 
-                  onClick={() => setIsShowing(!isShowing)}
-                  className="p-1 text-gray-500 hover:text-blue-600"
-                  title={isShowing ? 'Hide preview' : 'Preview'}
-                >
-                  {isShowing ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                  )}
-                </button>
-                <button 
-                  onClick={closeDown}
-                  className="p-1 text-gray-500 hover:text-red-600"
-                  title="Remove file"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                </button>
+            </div>
+          ))}
+          
+          {isTyping && (
+            <div className="flex justify-start animate-fadeIn">
+              <div className="bg-white text-gray-800 shadow-md border border-gray-100 rounded-2xl px-4 py-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
               </div>
             </div>
           )}
-        </div>
-
-        {isShowing && (
-          <button
-            onClick={closeDown}
-            className="mt-2 px-6 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium"
-          >
-            Cancel Image
-          </button>
-        )}
-      </div>
-
-      {/* Query Input */}
-      <div className="bg-white w-full md:w-1/2 p-6 rounded-2xl shadow-md flex flex-col justify-between">
-        <textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Type your health query here..."
-          className="w-full h-56 p-4 rounded-lg border border-gray-300 resize-none focus:outline-none focus:ring-2 focus:ring-black"
-        />
-        <div className="mt-4 flex gap-2">
-          <button
-            onClick={handleSubmit}
-            className="flex-1 px-6 py-3 rounded-lg bg-black text-white font-semibold hover:bg-gray-800 transition-all duration-300"
-          >
-            Submit
-          </button>
-          <button
-            onClick={() => window.location.href = '/mood-detector'}
-            className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-all duration-300 whitespace-nowrap"
-            title="Detect your mood first for personalized advice"
-          >
-            😊 Detect My Mood
-          </button>
+          
+          <div ref={messagesEndRef} />
         </div>
       </div>
-    </div>
 
-    {/* Output Section */}
-    <div className="w-full max-w-5xl bg-white rounded-2xl shadow-md p-6 md:p-10 min-h-[200px]">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-900">
-        Remedial & Suggestions
-      </h2>
-      <p className="whitespace-pre-wrap text-gray-700">{output}</p>
-    </div>
-  </div>
-);
+      {/* Input Area */}
+      <div className="bg-white border-t border-gray-200 px-4 py-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Image Preview */}
+          {ImageURL && (
+            <div className="mb-3 relative inline-block">
+              <img
+                src={ImageURL}
+                alt="Preview"
+                className="h-20 rounded-lg border-2 border-indigo-200"
+              />
+              <button
+                onClick={removeImage}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+              >
+                <FiX className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
+          {/* Input Box */}
+          <div className="flex items-end gap-2">
+            <label className="cursor-pointer p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+              <FiImage className="w-5 h-5 text-gray-600" />
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={setFile}
+              />
+            </label>
+
+            <div className="flex-1 bg-gray-100 rounded-lg px-4 py-2">
+              <textarea
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message here..."
+                className="w-full bg-transparent resize-none focus:outline-none text-gray-800 placeholder-gray-400"
+                rows="1"
+                style={{ maxHeight: '120px' }}
+              />
+            </div>
+
+            <button
+              onClick={handleSendMessage}
+              disabled={isTyping}
+              className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FiSend className="w-5 h-5" />
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-2 text-center">
+            Press Enter to send • Shift+Enter for new line
+          </p>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
+    </div>
+  );
 };
 
 export default AIHealthAssistant;

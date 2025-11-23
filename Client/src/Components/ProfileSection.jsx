@@ -115,77 +115,6 @@ const ProfileSection = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleDownloadPDF = () => {
-    try {
-      const doc = new jsPDF();
-      
-      // Set up the document
-      doc.setFontSize(18);
-      doc.text("Profile Information", 105, 20, { align: "center" });
-      
-      // Draw a line under the title
-      doc.setLineWidth(0.5);
-      doc.line(20, 25, 190, 25);
-      
-      // Set font for content
-      doc.setFontSize(12);
-      
-      let y = 40;
-      const lineSpacing = 12;
-      
-      // Helper function to safely add text
-      const addLine = (label, value) => {
-        const text = `${label}: ${value || 'Not provided'}`;
-        doc.text(text, 20, y);
-        y += lineSpacing;
-      };
-      
-      // Add profile information
-      addLine("Name", formData.name);
-      addLine("Email", formData.email);
-      addLine("Phone", formData.phone);
-      
-      // Format date
-      if (formData.dob) {
-        try {
-          const date = new Date(formData.dob);
-          if (!isNaN(date.getTime())) {
-            const formatted = date.toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            });
-            addLine("Date of Birth", formatted);
-          } else {
-            addLine("Date of Birth", "Invalid date");
-          }
-        } catch (e) {
-          addLine("Date of Birth", "Invalid date");
-        }
-      } else {
-        addLine("Date of Birth", "Not provided");
-      }
-      
-      addLine("Blood Group", formData.bloodGroup);
-      addLine("Address", formData.address);
-      addLine("Smoking", formData.smoking ? 'Yes' : 'No');
-      addLine("Drinking", formData.drinking ? 'Yes' : 'No');
-      
-      // Add footer
-      doc.setFontSize(10);
-      doc.setTextColor(128, 128, 128);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 280, { align: "center" });
-      
-      // Save the PDF
-      doc.save("profile.pdf");
-      
-      console.log("PDF generated successfully");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF. Please try again.");
-    }
-  };
-
   const handleImageChange = async (e) => {
     const myFile = e.target.files[0];
     if (myFile) {
@@ -315,15 +244,8 @@ const ProfileSection = () => {
         >
           {editMode ? "Save Changes" : "Edit Profile"}
         </button>
-        <button
-          onClick={handleDownloadPDF}
-          className="bg-green-600 hover:bg-green-700 transition-all text-white px-4 py-2 rounded font-semibold"
-        >
-          Download PDF
-        </button>
       </div>
     </div>
-    // </div>
   );
 };
 

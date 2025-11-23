@@ -11,12 +11,27 @@ const Profile = ({ name }) => {
 
   const logOutUser = async () => {
     try {
+      // Call backend logout endpoint
       await axios.post(`${BACKEND_URL}/api/auth/logout`, {}, { withCredentials: true });
+      
+      // Clear all local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.clear();
+      
+      // Update app state
+      setisLoggedIn(false);
+      setUserData(null);
+      
+      // Navigate to home
+      navigate("/");
+    } catch (err) {
+      console.error("Logout error:", err);
+      // Even if backend fails, clear local data
+      localStorage.clear();
       setisLoggedIn(false);
       setUserData(null);
       navigate("/");
-    } catch (err) {
-      // console.error("Logout error:", err);
     }
   };
 
@@ -79,7 +94,7 @@ const Profile = ({ name }) => {
               className="px-4 py-2 text-black hover:bg-yellow-200 cursor-pointer"
               onClick={() => {
                 setShowOptions(false);
-                navigate("/dashboard");
+                navigate("/mental-health");
               }}
             >
               Overall Tracking
