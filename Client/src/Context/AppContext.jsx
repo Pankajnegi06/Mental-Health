@@ -139,6 +139,7 @@ export const AppProvider = (props) => {
         getTable,
         getUserData,
         table,
+        setTable,
       }}
     >
       {props.children}

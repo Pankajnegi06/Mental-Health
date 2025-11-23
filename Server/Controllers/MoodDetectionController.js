@@ -5,7 +5,7 @@ const axios = require('axios');
 const analyzeMood = async (req, res) => {
   try {
     const { imageData } = req.body;
-    const userId = req.userId; // From auth middleware
+    const userId = req.body.userId; // From auth middleware
 
     if (!imageData) {
       return res.status(400).json({
@@ -123,7 +123,7 @@ Analyze the image and respond ONLY with valid JSON, no additional text.`;
 // Get mood history for a user
 const getMoodHistory = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.body.userId;
     const { days = 7 } = req.query;
 
     console.log(`Fetching mood history for user ${userId}, last ${days} days`);
@@ -152,7 +152,7 @@ const getMoodHistory = async (req, res) => {
 // Get current (latest) mood for a user
 const getCurrentMood = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.body.userId;
 
     console.log(`Fetching current mood for user ${userId}`);
 

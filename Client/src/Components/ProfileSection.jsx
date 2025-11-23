@@ -13,12 +13,12 @@ const ProfileSection = () => {
     name: "",
     email: "",
     phone: "",
-    dob: null,
+    dob: "",
     bloodGroup: "",
     address: "",
     smoking: false,
     drinking: false,
-    profileImage: null,
+    profileImage: "",
   });
 
   useEffect(() => {
@@ -32,14 +32,23 @@ const ProfileSection = () => {
         })
         .then((res) => {
           if (res.data.success === true) {
-            setFormData(res.data.myData);
-            setImageURL(res.data.myData.profileImage);
-          } else {
-            setFormData({});
+            const data = res.data.myData;
+            setFormData({
+              name: data.name || "",
+              email: data.email || "",
+              phone: data.phone || "",
+              dob: data.dob || "",
+              bloodGroup: data.bloodGroup || "",
+              address: data.address || "",
+              smoking: data.smoking || false,
+              drinking: data.drinking || false,
+              profileImage: data.profileImage || "",
+            });
+            setImageURL(data.profileImage || "https://icon-library.com/images/generic-user-icon/generic-user-icon-9.jpg");
           }
         })
-        .catch(() => {
-          // console.log("Not access profile section data");
+        .catch((err) => {
+          console.error("Error loading profile data:", err);
         });
     }
     fun();
@@ -107,17 +116,74 @@ const ProfileSection = () => {
   };
 
   const handleDownloadPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(12);
-    doc.text(`Name: ${formData.name}`, 10, 10);
-    doc.text(`Email: ${formData.email}`, 10, 20);
-    doc.text(`Phone: ${formData.phone}`, 10, 30);
-    doc.text(`DOB: ${formData.dob}`, 10, 40);
-    doc.text(`Blood Group: ${formData.bloodGroup}`, 10, 50);
-    doc.text(`Address: ${formData.address}`, 10, 60);
-    doc.text(`Smoking: ${formData.smoking ? "Yes" : "No"}`, 10, 70);
-    doc.text(`Drinking: ${formData.drinking ? "Yes" : "No"}`, 10, 80);
-    doc.save("profile.pdf");
+    try {
+      const doc = new jsPDF();
+      
+      // Set up the document
+      doc.setFontSize(18);
+      doc.text("Profile Information", 105, 20, { align: "center" });
+      
+      // Draw a line under the title
+      doc.setLineWidth(0.5);
+      doc.line(20, 25, 190, 25);
+      
+      // Set font for content
+      doc.setFontSize(12);
+      
+      let y = 40;
+      const lineSpacing = 12;
+      
+      // Helper function to safely add text
+      const addLine = (label, value) => {
+        const text = `${label}: ${value || 'Not provided'}`;
+        doc.text(text, 20, y);
+        y += lineSpacing;
+      };
+      
+      // Add profile information
+      addLine("Name", formData.name);
+      addLine("Email", formData.email);
+      addLine("Phone", formData.phone);
+      
+      // Format date
+      if (formData.dob) {
+        try {
+          const date = new Date(formData.dob);
+          if (!isNaN(date.getTime())) {
+            const formatted = date.toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            });
+            addLine("Date of Birth", formatted);
+          } else {
+            addLine("Date of Birth", "Invalid date");
+          }
+        } catch (e) {
+          addLine("Date of Birth", "Invalid date");
+        }
+      } else {
+        addLine("Date of Birth", "Not provided");
+      }
+      
+      addLine("Blood Group", formData.bloodGroup);
+      addLine("Address", formData.address);
+      addLine("Smoking", formData.smoking ? 'Yes' : 'No');
+      addLine("Drinking", formData.drinking ? 'Yes' : 'No');
+      
+      // Add footer
+      doc.setFontSize(10);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 280, { align: "center" });
+      
+      // Save the PDF
+      doc.save("profile.pdf");
+      
+      console.log("PDF generated successfully");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   const handleImageChange = async (e) => {
@@ -133,9 +199,12 @@ const ProfileSection = () => {
     <div className="flex flex-col items-center justify-center gap-4">
       <div className={`flex items-center ${editMode?"flex-col":"flex-row"} gap-6`}>
         <img
-          src={ImageURL}
+          src={ImageURL || "https://icon-library.com/images/generic-user-icon/generic-user-icon-9.jpg"}
           alt="profileImage"
           className="w-36 h-36 rounded-full object-cover border-2 border-gray-400 shadow-sm"
+          onError={(e) => {
+            e.target.src = "https://icon-library.com/images/generic-user-icon/generic-user-icon-9.jpg";
+          }}
         />
 
         {editMode && (
@@ -151,7 +220,7 @@ const ProfileSection = () => {
       <input
         name="name"
         type="text"
-        value={formData.name}
+        value={formData.name || ""}
         onChange={handleChange}
         placeholder="Full Name"
         disabled={!editMode}
@@ -161,7 +230,7 @@ const ProfileSection = () => {
       <input
         name="email"
         type="email"
-        value={formData.email}
+        value={formData.email || ""}
         onChange={handleChange}
         placeholder="Email"
         disabled={!editMode}
@@ -171,7 +240,7 @@ const ProfileSection = () => {
       <input
         name="phone"
         type="tel"
-        value={formData.phone}
+        value={formData.phone || ""}
         onChange={handleChange}
         placeholder="Phone Number"
         disabled={!editMode}
@@ -194,7 +263,7 @@ const ProfileSection = () => {
       <input
         name="bloodGroup"
         type="text"
-        value={formData.bloodGroup}
+        value={formData.bloodGroup || ""}
         onChange={handleChange}
         placeholder="Blood Group"
         disabled={!editMode}
@@ -203,7 +272,7 @@ const ProfileSection = () => {
 
       <textarea
         name="address"
-        value={formData.address}
+        value={formData.address || ""}
         onChange={handleChange}
         placeholder="Address"
         disabled={!editMode}
@@ -215,7 +284,7 @@ const ProfileSection = () => {
           <input
             type="checkbox"
             name="smoking"
-            checked={formData.smoking}
+            checked={formData.smoking || false}
             onChange={handleChecked}
             disabled={!editMode}
             className="accent-red-600"
@@ -226,7 +295,7 @@ const ProfileSection = () => {
           <input
             type="checkbox"
             name="drinking"
-            checked={formData.drinking}
+            checked={formData.drinking || false}
             onChange={handleChecked}
             disabled={!editMode}
             className="accent-blue-600"
@@ -244,7 +313,7 @@ const ProfileSection = () => {
               : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
-          {editMode ? "Save" : "Edit"}
+          {editMode ? "Save Changes" : "Edit Profile"}
         </button>
         <button
           onClick={handleDownloadPDF}
