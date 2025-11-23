@@ -19,9 +19,11 @@ const analyzeMood = async (req, res) => {
     // Extract base64 data from data URL
     const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
 
+    console.log('Sending request to Gemini API...');
+
     // Prepare Gemini API request
     const geminiResponse = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         contents: [{
           parts: [
@@ -47,7 +49,11 @@ Respond ONLY with valid JSON, no additional text.`
               }
             }
           ]
-        }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024
+        }
       },
       {
         headers: {
@@ -56,13 +62,15 @@ Respond ONLY with valid JSON, no additional text.`
       }
     );
 
-    const aiResponse = geminiResponse.data.candidates[0]?.content?.parts[0]?.text;
+    const aiResponse = geminiResponse.data.candidates?.[0]?.content?.parts?.[0]?.text;
     console.log('AI Response:', aiResponse);
 
     if (!aiResponse) {
+      console.error('No AI response received:', geminiResponse.data);
       return res.status(500).json({
         status: 0,
-        message: 'No response from AI'
+        message: 'No response from AI',
+        debug: geminiResponse.data
       });
     }
 
@@ -116,10 +124,12 @@ Respond ONLY with valid JSON, no additional text.`
 
   } catch (error) {
     console.error('Error in analyzeMood:', error);
+    console.error('Error details:', error.response?.data);
     return res.status(500).json({
       status: 0,
       message: 'Failed to analyze mood',
-      error: error.response?.data?.error?.message || error.message
+      error: error.response?.data?.error?.message || error.message,
+      details: error.response?.data
     });
   }
 };

@@ -178,6 +178,7 @@ const MoodDetector = () => {
                   ref={videoRef}
                   autoPlay
                   playsInline
+                  muted
                   className="w-full h-auto"
                 />
                 <canvas ref={canvasRef} className="hidden" />
