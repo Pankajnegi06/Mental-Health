@@ -87,7 +87,7 @@ const QuestionnaireLanding = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/MentalHealthQuestionnaire")}
               className="px-10 py-4 rounded-xl text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 transition-all duration-300 font-semibold text-lg shadow-2xl mb-12"
             >
               Start Assessment

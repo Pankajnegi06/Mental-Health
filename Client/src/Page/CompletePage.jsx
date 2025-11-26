@@ -4,7 +4,7 @@ import Hero from '../Components/Hero'
 import LocationFeature from '../Components/LocationFeature'
 import AIDoctorFeature from '../Components/AIDoctorFeature'
 import About from '../Components/About'
-import Footer from '../Components/Footer'
+
 import MyMap from '../Tracker/MyMap'
 import MeetingFeature from '../Components/MeetingFeature'
 import Dashboard from '../Components/Dashboard'

@@ -91,14 +91,57 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
   };
 
   const myLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    const handleSuccess = (pos) => {
         const { latitude, longitude } = pos.coords;
         setLocation({ lat: latitude, lng: longitude });
         getNearbyClinics(latitude, longitude);
         getPlace(latitude, longitude);
+    };
+
+    const handleError = (err) => {
+        console.error("Geolocation error:", err);
+        let msg = "Could not get your location.";
+        switch(err.code) {
+            case err.PERMISSION_DENIED:
+                msg = "Location permission denied. Please enable it in your browser settings.";
+                break;
+            case err.POSITION_UNAVAILABLE:
+                msg = "Location unavailable. Please check your System/OS location settings.";
+                break;
+            case err.TIMEOUT:
+                msg = "Location request timed out.";
+                break;
+            default:
+                msg = "An unknown error occurred getting location.";
+        }
+        toast.error(msg);
+    };
+
+    // Attempt 1: High Accuracy
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      (err) => {
+        // If failed (timeout or unavailable), try low accuracy
+        if (err.code === err.TIMEOUT || err.code === err.POSITION_UNAVAILABLE) {
+            console.log("High accuracy failed, trying low accuracy...");
+            toast("High accuracy failed, trying standard location...", { icon: '⚠️' });
+            
+            // Attempt 2: Low Accuracy
+            navigator.geolocation.getCurrentPosition(
+                handleSuccess,
+                handleError, 
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            handleError(err);
+        }
       },
-      (err) => toast.error("Could not get your location.")
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
   };
 

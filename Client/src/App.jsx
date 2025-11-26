@@ -12,7 +12,7 @@ import Hero from './Components/Hero';
 import LocationFeature from './Components/LocationFeature';
 import LocationTracker from './Tracker/LocationTracker';
 import AIDoctorFeature from './Components/AIDoctorFeature';
-import Footer from './Components/Footer';
+
 import { MyScreen } from './CameraSecurity/screens/MyScreen';
 import LobbyScreen from './CameraSecurity/screens/Lobby';
 import Docs from './Components/Docs';
@@ -45,7 +45,7 @@ const MainLayout = () => {
       <main className="flex-grow">
         <Outlet />
       </main>
-      <Footer />
+    
     </div>
   );
 };

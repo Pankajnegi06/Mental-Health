@@ -6,7 +6,7 @@ import blogtop3 from "../assets/blogtop3.png";
 import blogtop4 from "../assets/blogtop4.jpeg";
 import blogtop5 from "../assets/blogtop5.jpeg";
 import blogtop7 from "../assets/blogtop4.jpeg";
-import Footer from "./Footer";
+
 import HarshNavbar from "./HarshNavbar";
 import "../index.css";
 import Footer2 from "./Footer2";
