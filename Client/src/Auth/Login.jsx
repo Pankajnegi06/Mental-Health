@@ -108,13 +108,7 @@ const Login = ({ isLightMode, setisLightMode }) => {
             >
               Login
             </button>
-            <button
-              type="button"
-              className="text-sm sm:text-base text-gray-600 hover:underline"
-              onClick={() => Navigate("/forgot-password")}
-            >
-              Forgot Password?
-            </button>
+            
           </div>
         </form>
 

@@ -1048,6 +1048,7 @@ const MentalHealthQuestionnaire = () => {
                 </div>
               </motion.div>
 
+              {assessmentMode === 'detailed' && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1067,7 +1068,9 @@ const MentalHealthQuestionnaire = () => {
                   </div>
                 </div>
               </motion.div>
+              )}
 
+              {assessmentMode === 'detailed' && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1101,6 +1104,7 @@ const MentalHealthQuestionnaire = () => {
                   </div>
                 </div>
               </motion.div>
+              )}
             </div>
 
             {/* Call to Action */}
@@ -1589,7 +1593,8 @@ const MentalHealthQuestionnaire = () => {
   // Main Questionnaire View
   const questions = getCurrentQuestions();
   const currentAnswers = getCurrentAnswers();
-  const progress = ((currentScale * 25) + ((currentQuestion + 1) / questions.length) * 25);
+  const scaleWeight = assessmentMode === 'quick' ? 50 : 25;
+  const progress = ((currentScale * scaleWeight) + ((currentQuestion + 1) / questions.length) * scaleWeight);
   
   // Calculate total questions based on assessment mode
   const totalQuestions = assessmentMode === 'quick' 
@@ -1757,7 +1762,7 @@ const MentalHealthQuestionnaire = () => {
             className="flex-1 px-6 py-4 rounded-xl text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 transition-all duration-300 font-semibold text-lg shadow-lg"
           >
             <div className="flex items-center justify-center gap-2">
-              {currentQuestion === questions.length - 1 && currentScale === 3 ? "Complete" : "Next"}
+              {currentQuestion === questions.length - 1 && currentScale === (assessmentMode === 'quick' ? 1 : 3) ? "Complete" : "Next"}
               <FaArrowRight />
             </div>
           </motion.button>

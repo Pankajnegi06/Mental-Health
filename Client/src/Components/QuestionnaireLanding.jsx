@@ -175,7 +175,7 @@ const QuestionnaireLanding = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
             whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-purple-200"
+            className="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-purple-200 flex flex-col h-full"
           >
             <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6">
               <FaClipboardCheck className="text-3xl text-white" />
@@ -203,7 +203,7 @@ const QuestionnaireLanding = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/MentalHealthQuestionnaire", { state: { mode: "quick" } })}
-              className="w-full px-8 py-4 rounded-xl text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 transition-all duration-300 font-semibold text-lg shadow-lg"
+              className="w-full px-8 py-4 rounded-xl text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 transition-all duration-300 font-semibold text-lg shadow-lg mt-auto"
             >
               Start Quick Assessment
             </motion.button>
@@ -215,7 +215,7 @@ const QuestionnaireLanding = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
             whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-gradient-to-br from-purple-600 to-blue-500 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-purple-400 relative overflow-hidden"
+            className="bg-gradient-to-br from-purple-600 to-blue-500 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-purple-400 relative overflow-hidden flex flex-col h-full"
           >
             <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
               Recommended
@@ -251,7 +251,7 @@ const QuestionnaireLanding = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/MentalHealthQuestionnaire", { state: { mode: "detailed" } })}
-              className="w-full px-8 py-4 rounded-xl text-purple-600 bg-white hover:bg-gray-50 transition-all duration-300 font-semibold text-lg shadow-lg"
+              className="w-full px-8 py-4 rounded-xl text-purple-600 bg-white hover:bg-gray-50 transition-all duration-300 font-semibold text-lg shadow-lg mt-auto"
             >
               Start Detailed Assessment
             </motion.button>

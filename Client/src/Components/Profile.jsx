@@ -63,15 +63,7 @@ const Profile = ({ name }) => {
       {showOptions && (
         <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-lg rounded-md z-50">
           <ul>
-            {!userData.isAccountVerified && <li
-              className="px-4 py-2 text-black hover:bg-yellow-200 cursor-pointer"
-              onClick={() => {
-                setShowOptions(false);
-                navigate("/verify-email");
-              }}
-            >
-              Verify Email
-            </li>}
+            
             <li
               className="px-4 py-2 text-black hover:bg-yellow-200 cursor-pointer"
               onClick={() => {

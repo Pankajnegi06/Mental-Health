@@ -29,18 +29,21 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
     if (!searchQuery.trim()) return toast.error("Please enter a location");
     
     try {
-        const apiKey = "AIzaSyDB7pA6szdKlc9GX4dA5WRmracINJHktEk"; // Using the same key as MyMap
+        // Using OpenStreetMap (Nominatim) for free geocoding
         const response = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${apiKey}`
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`
         );
         const data = await response.json();
 
-        if (data.status === "OK" && data.results.length > 0) {
-            const { lat, lng } = data.results[0].geometry.location;
-            setLocation({ lat, lng });
-            getNearbyClinics(lat, lng);
-            setPlace(data.results[0].formatted_address);
-            toast.success(`Found location: ${data.results[0].formatted_address}`);
+        if (data && data.length > 0) {
+            const { lat, lon, display_name } = data[0];
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lon);
+            
+            setLocation({ lat: latitude, lng: longitude });
+            getNearbyClinics(latitude, longitude);
+            setPlace(display_name);
+            toast.success(`Found location: ${display_name}`);
         } else {
             toast.error("Location not found");
         }
@@ -113,7 +116,12 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
     };
 
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/appointment/addAppointment`, payload, { withCredentials: true });
+      const response = await axios.post(`${BACKEND_URL}/api/appointment/addAppointment`, payload, { 
+        withCredentials: true,
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
       if (response.data.status) {
         setAllAppoint((prev) => [...prev, activeClinicId]);
         setOpen(false);
@@ -210,7 +218,12 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
 
   const cancelKaro = async () => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/appointment/removeAppointment`, { appointmentId: activeClinicId }, { withCredentials: true });
+      const response = await axios.post(`${BACKEND_URL}/api/appointment/removeAppointment`, { appointmentId: activeClinicId }, { 
+        withCredentials: true,
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
       if (response.data.status) {
         setAllAppoint((prev) => prev.filter((id) => id !== activeClinicId));
         setOpen(false);
@@ -224,7 +237,12 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
   useEffect(() => {
     const getAllAppointed = async () => {
       try {
-        const res = await axios.get(`${BACKEND_URL}/api/appointment/getAllApointments`, { withCredentials: true });
+        const res = await axios.get(`${BACKEND_URL}/api/appointment/getAllApointments`, { 
+            withCredentials: true,
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            }
+        });
         if (res.data.myData) {
           const appointmentIds = res.data.myData.map(item => item.appointmentId);
           setAllAppoint(appointmentIds);
