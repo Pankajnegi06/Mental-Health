@@ -371,10 +371,18 @@ const MentalHealthQuestionnaire = () => {
       };
     }
 
+    const token = localStorage.getItem('token');
+
     const response = await axios.post(
       `${BACKEND_URL}/api/questionnaire/save`,
       payload,
-      { withCredentials: true }
+      { 
+        withCredentials: true,
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+          'Content-Type': 'application/json',
+        }
+      }
     );
 
     if (response.data.status === 1) {
@@ -389,6 +397,9 @@ const MentalHealthQuestionnaire = () => {
   } catch (error) {
     toast.error("Failed to save results. Please try again.");
     console.error("Error saving questionnaire:", error);
+    if (error.response) {
+      console.error("Server error response:", error.response.data);
+    }
   } finally {
     setSaving(false);
   }
