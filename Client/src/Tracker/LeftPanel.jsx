@@ -23,6 +23,32 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
   });
   const [allAppoint, setAllAppoint] = useState([]);
   const [startBook, setStartBook] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return toast.error("Please enter a location");
+    
+    try {
+        const apiKey = "AIzaSyDB7pA6szdKlc9GX4dA5WRmracINJHktEk"; // Using the same key as MyMap
+        const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${apiKey}`
+        );
+        const data = await response.json();
+
+        if (data.status === "OK" && data.results.length > 0) {
+            const { lat, lng } = data.results[0].geometry.location;
+            setLocation({ lat, lng });
+            getNearbyClinics(lat, lng);
+            setPlace(data.results[0].formatted_address);
+            toast.success(`Found location: ${data.results[0].formatted_address}`);
+        } else {
+            toast.error("Location not found");
+        }
+    } catch (error) {
+        console.error("Search error:", error);
+        toast.error("Failed to search location");
+    }
+  };
 
   // Function to get reverse-geocoded address
   const getPlace = async (lat, lng) => {
@@ -78,15 +104,24 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
     if (!myData.date || !myData.time) {
       return toast.error("Please select a date and time.");
     }
+
+    // Construct payload explicitly to ensure all data is present
+    const payload = {
+        ...myData,
+        hospitalName: targetedClinic,
+        appointmentId: activeClinicId
+    };
+
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/appointment/addAppointment`, myData, { withCredentials: true });
+      const response = await axios.post(`${BACKEND_URL}/api/appointment/addAppointment`, payload, { withCredentials: true });
       if (response.data.status) {
-        setAllAppoint((prev) => [...prev, myData.appointmentId]);
+        setAllAppoint((prev) => [...prev, activeClinicId]);
         setOpen(false);
         toast.success("Added to your Wishlist!");
       }
     } catch (e) {
       console.error("Error saving booking:", e);
+      toast.error("Failed to save to wishlist");
     }
   };
 
@@ -226,6 +261,17 @@ const LeftPanel = ({ getLocation, setLocation, place, setPlace }) => {
         >
           <h1 className="text-2xl font-bold cursor-pointer" onClick={() => navigate("/")}>StillMind</h1>
           <div className="flex flex-wrap justify-center items-center gap-3">
+            <div className="flex items-center gap-2 bg-white/20 rounded-lg px-2 py-1">
+                <input 
+                    type="text" 
+                    placeholder="Enter city..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-transparent text-white placeholder-gray-200 outline-none w-32 sm:w-40"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+                <button onClick={handleSearch} className="text-white hover:text-yellow-300">🔍</button>
+            </div>
             <button onClick={myLocation} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-300 transform hover:scale-105">Get Location</button>
             <button onClick={toggleSortClinics} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-300 transform hover:scale-105">{isSorted ? "Unsort" : "Sort by Distance"}</button>
             <select onChange={(e) => setFound(e.target.value)} value={found} className="bg-white/20 hover:bg-white/30 rounded-lg px-4 py-2 outline-none border-none">
