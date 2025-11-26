@@ -182,12 +182,7 @@ const AIHealthAssistant = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => window.location.href = '/mood-detector'}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
-            >
-              😊 Detect Mood
-            </button>
+           
             <button
               onClick={clearChat}
               className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"

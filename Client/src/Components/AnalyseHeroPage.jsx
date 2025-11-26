@@ -45,7 +45,7 @@ const AnalyseHeroPage = () => {
         {/* Button */}
         <motion.button 
           className="text-white mx-auto bg-blue-600 transition-all duration-300 hover:bg-blue-700 active:scale-95 flex items-center rounded-2xl px-4  py-4 w-full "
-          onClick={()=>window.open("/mood-detector","__blank")}
+          onClick={()=>window.open("/mental-health","__blank")}
         >
           Start Analysis
         </motion.button>

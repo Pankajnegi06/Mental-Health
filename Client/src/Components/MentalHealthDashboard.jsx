@@ -728,7 +728,7 @@ const MentalHealthDashboard = () => {
             </div>
           )}
 
-          {!currentMood && (
+          {/* {!currentMood && (
             <div className="bg-gray-100 rounded-lg shadow p-6 text-center">
               <p className="text-gray-600 mb-4">No mood detected yet. Detect your mood to get personalized insights!</p>
               <button
@@ -738,7 +738,7 @@ const MentalHealthDashboard = () => {
                 😊 Detect My Mood
               </button>
             </div>
-          )}
+          )} */}
 
           {/* Quick Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

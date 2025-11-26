@@ -77,7 +77,8 @@ function App() {
       <Routes>
         {/* Routes with Navbar and Footer */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<MentalHealthQuestionnaire />} />
+          <Route path="/" element={<QuestionnaireLanding />} />
+          <Route path="/MentalHealthQuestionnaire" element={<MentalHealthQuestionnaire />} />
           <Route path="/home" element={<CompletePage />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

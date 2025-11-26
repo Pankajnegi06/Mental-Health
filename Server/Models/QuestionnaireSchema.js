@@ -7,6 +7,11 @@ const questionnaireSchema = new mongoose.Schema(
       ref: "patients",
       required: true,
     },
+    assessmentMode: {
+      type: String,
+      enum: ['quick', 'detailed'],
+      default: 'detailed',
+    },
     phq9: {
       score: { type: Number, required: true },
       answers: [Number],
@@ -20,26 +25,47 @@ const questionnaireSchema = new mongoose.Schema(
       completedAt: { type: Date, default: Date.now },
     },
     pss10: {
-      score: { type: Number, required: true },
+      score: { type: Number },
       answers: [Number],
-      severity: { type: String, required: true },
+      severity: { type: String },
       completedAt: { type: Date, default: Date.now },
     },
     dass21: {
       depression: {
-        score: { type: Number, required: true },
-        severity: { type: String, required: true },
+        score: { type: Number },
+        severity: { type: String },
       },
       anxiety: {
-        score: { type: Number, required: true },
-        severity: { type: String, required: true },
+        score: { type: Number },
+        severity: { type: String },
       },
       stress: {
-        score: { type: Number, required: true },
-        severity: { type: String, required: true },
+        score: { type: Number },
+        severity: { type: String },
       },
       answers: [Number],
       completedAt: { type: Date, default: Date.now },
+    },
+    aiReport: {
+      overallSummary: { type: String },
+      depression: {
+        analysis: { type: String },
+        recommendations: [String],
+        copingStrategies: [String],
+      },
+      anxiety: {
+        analysis: { type: String },
+        recommendations: [String],
+        copingStrategies: [String],
+      },
+      stress: {
+        analysis: { type: String },
+        recommendations: [String],
+        copingStrategies: [String],
+      },
+      nextSteps: [String],
+      professionalHelpRecommended: { type: Boolean, default: false },
+      generatedAt: { type: Date },
     },
     completedAt: {
       type: Date,

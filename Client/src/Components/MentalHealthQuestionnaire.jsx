@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast, Toaster } from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaCheckCircle, FaArrowRight, FaArrowLeft, FaChartBar, FaLock, FaHistory, FaSignInAlt, FaVolumeUp, FaVolumeMute, FaHome } from "react-icons/fa";
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -33,6 +33,8 @@ ChartJS.register(
 const MentalHealthQuestionnaire = () => {
   const { isLoggedIn, BACKEND_URL, getAuthState } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [assessmentMode, setAssessmentMode] = useState(location.state?.mode || 'detailed');
   const [currentScale, setCurrentScale] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({
@@ -45,6 +47,9 @@ const MentalHealthQuestionnaire = () => {
   const [showBriefReport, setShowBriefReport] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [scores, setScores] = useState({});
+  const [aiReport, setAiReport] = useState(null);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [questionnaireId, setQuestionnaireId] = useState(null);
   const [questionnaireHistory, setQuestionnaireHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -233,27 +238,30 @@ const MentalHealthQuestionnaire = () => {
   };
 
   const handleNext = () => {
-    const questions = getCurrentQuestions();
-    const currentAnswers = getCurrentAnswers();
-    
-    if (currentAnswers[currentQuestion] === undefined) {
-      toast.error("Please select an answer before continuing");
-      return;
-    }
+  const questions = getCurrentQuestions();
+  const currentAnswers = getCurrentAnswers();
+  
+  if (currentAnswers[currentQuestion] === undefined) {
+    toast.error("Please select an answer before continuing");
+    return;
+  }
 
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+  if (currentQuestion < questions.length - 1) {
+    setCurrentQuestion(currentQuestion + 1);
+  } else {
+    // Determine the last scale based on assessment mode
+    const lastScale = assessmentMode === 'quick' ? 1 : 3;
+    
+    if (currentScale < lastScale) {
+      setCurrentScale(currentScale + 1);
+      setCurrentQuestion(0);
+      toast.success(`${scaleNames[currentScale]} completed!`);
     } else {
-      if (currentScale < 3) {
-        setCurrentScale(currentScale + 1);
-        setCurrentQuestion(0);
-        toast.success(`${scaleNames[currentScale]} completed!`);
-      } else {
-        calculateScores();
-        setShowResults(true);
-      }
+      calculateScores();
+      setShowResults(true);
     }
-  };
+  }
+};
 
   const handlePrevious = () => {
     if (currentQuestion > 0) {
@@ -266,11 +274,17 @@ const MentalHealthQuestionnaire = () => {
   };
 
   const calculateScores = () => {
-    const phq9Score = answers.phq9.reduce((sum, val) => sum + (val || 0), 0);
-    const gad7Score = answers.gad7.reduce((sum, val) => sum + (val || 0), 0);
-    
+  const phq9Score = answers.phq9.reduce((sum, val) => sum + (val || 0), 0);
+  const gad7Score = answers.gad7.reduce((sum, val) => sum + (val || 0), 0);
+  
+  let pss10Score = 0;
+  let dassDepression = 0;
+  let dassAnxiety = 0;
+  let dassStress = 0;
+
+  // Only calculate PSS-10 and DASS-21 for detailed mode
+  if (assessmentMode === 'detailed') {
     const pss10Reversed = [3, 4, 6, 7];
-    let pss10Score = 0;
     answers.pss10.forEach((val, idx) => {
       if (val !== undefined) {
         if (pss10Reversed.includes(idx)) {
@@ -285,85 +299,126 @@ const MentalHealthQuestionnaire = () => {
     const anxietyItems = [1, 3, 6, 8, 14, 18, 19];
     const stressItems = [0, 5, 7, 10, 11, 13, 17];
     
-    const dassDepression = depressionItems.reduce((sum, idx) => sum + (answers.dass21[idx] || 0) * 2, 0);
-    const dassAnxiety = anxietyItems.reduce((sum, idx) => sum + (answers.dass21[idx] || 0) * 2, 0);
-    const dassStress = stressItems.reduce((sum, idx) => sum + (answers.dass21[idx] || 0) * 2, 0);
-    
-    const calculatedScores = {
-      phq9: phq9Score,
-      gad7: gad7Score,
-      pss10: pss10Score,
-      dass21: {
-        depression: dassDepression,
-        anxiety: dassAnxiety,
-        stress: dassStress
-      }
-    };
-    
-    setScores(calculatedScores);
-    
-    // Show brief report first for all users
-    setShowBriefReport(true);
+    dassDepression = depressionItems.reduce((sum, idx) => sum + (answers.dass21[idx] || 0) * 2, 0);
+    dassAnxiety = anxietyItems.reduce((sum, idx) => sum + (answers.dass21[idx] || 0) * 2, 0);
+    dassStress = stressItems.reduce((sum, idx) => sum + (answers.dass21[idx] || 0) * 2, 0);
+  }
+  
+  const calculatedScores = {
+    phq9: phq9Score,
+    gad7: gad7Score,
+    pss10: pss10Score,
+    dass21: {
+      depression: dassDepression,
+      anxiety: dassAnxiety,
+      stress: dassStress
+    }
   };
+  
+  setScores(calculatedScores);
+  
+  // Show brief report first for all users
+  setShowBriefReport(true);
+};
 
   const saveQuestionnaire = async (calculatedScores) => {
-    setSaving(true);
-    try {
-      const phq9Severity = getPHQ9Severity(calculatedScores.phq9).level;
-      const gad7Severity = getGAD7Severity(calculatedScores.gad7).level;
+  setSaving(true);
+  try {
+    const phq9Severity = getPHQ9Severity(calculatedScores.phq9).level;
+    const gad7Severity = getGAD7Severity(calculatedScores.gad7).level;
+
+    const payload = {
+      assessmentMode,
+      phq9: {
+        score: calculatedScores.phq9,
+        answers: answers.phq9,
+        severity: phq9Severity,
+      },
+      gad7: {
+        score: calculatedScores.gad7,
+        answers: answers.gad7,
+        severity: gad7Severity,
+      },
+    };
+
+    // Add PSS-10 and DASS-21 only for detailed mode
+    if (assessmentMode === 'detailed') {
       const pss10Severity = getPSS10Severity(calculatedScores.pss10).level;
       const dassDepressionSeverity = getDASS21Severity(calculatedScores.dass21.depression, "depression").level;
       const dassAnxietySeverity = getDASS21Severity(calculatedScores.dass21.anxiety, "anxiety").level;
       const dassStressSeverity = getDASS21Severity(calculatedScores.dass21.stress, "stress").level;
 
-      const payload = {
-        phq9: {
-          score: calculatedScores.phq9,
-          answers: answers.phq9,
-          severity: phq9Severity,
-        },
-        gad7: {
-          score: calculatedScores.gad7,
-          answers: answers.gad7,
-          severity: gad7Severity,
-        },
-        pss10: {
-          score: calculatedScores.pss10,
-          answers: answers.pss10,
-          severity: pss10Severity,
-        },
-        dass21: {
-          depression: {
-            score: calculatedScores.dass21.depression,
-            severity: dassDepressionSeverity,
-          },
-          anxiety: {
-            score: calculatedScores.dass21.anxiety,
-            severity: dassAnxietySeverity,
-          },
-          stress: {
-            score: calculatedScores.dass21.stress,
-            severity: dassStressSeverity,
-          },
-          answers: answers.dass21,
-        },
+      payload.pss10 = {
+        score: calculatedScores.pss10,
+        answers: answers.pss10,
+        severity: pss10Severity,
       };
 
+      payload.dass21 = {
+        depression: {
+          score: calculatedScores.dass21.depression,
+          severity: dassDepressionSeverity,
+        },
+        anxiety: {
+          score: calculatedScores.dass21.anxiety,
+          severity: dassAnxietySeverity,
+        },
+        stress: {
+          score: calculatedScores.dass21.stress,
+          severity: dassStressSeverity,
+        },
+        answers: answers.dass21,
+      };
+    }
+
+    const response = await axios.post(
+      `${BACKEND_URL}/api/questionnaire/save`,
+      payload,
+      { withCredentials: true }
+    );
+
+    if (response.data.status === 1) {
+      const savedQuestionnaireId = response.data.data._id;
+      setQuestionnaireId(savedQuestionnaireId);
+      toast.success("Results saved successfully!");
+      fetchQuestionnaireHistory();
+      
+      // Generate AI report
+      await generateAIReport(savedQuestionnaireId);
+    }
+  } catch (error) {
+    toast.error("Failed to save results. Please try again.");
+    console.error("Error saving questionnaire:", error);
+  } finally {
+    setSaving(false);
+  }
+};
+
+  const generateAIReport = async (qId) => {
+    setGeneratingReport(true);
+    try {
+      const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${BACKEND_URL}/api/questionnaire/save`,
-        payload,
-        { withCredentials: true }
+        `${BACKEND_URL}/api/questionnaire/generate-report`,
+        { questionnaireId: qId },
+        {
+          withCredentials: true,
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : undefined,
+            'Content-Type': 'application/json',
+          },
+        }
       );
 
       if (response.data.status === 1) {
-        toast.success("Results saved successfully!");
-        fetchQuestionnaireHistory();
+        setAiReport(response.data.data.aiReport);
+        toast.success("AI report generated successfully!");
       }
     } catch (error) {
-      toast.error("Failed to save results. Please try again.");
-      console.error("Error saving questionnaire:", error);
+      console.error("Error generating AI report:", error);
+      toast.error("Could not generate AI recommendations. Showing basic results.");
     } finally {
-      setSaving(false);
+      setGeneratingReport(false);
     }
   };
 
@@ -788,7 +843,8 @@ const MentalHealthQuestionnaire = () => {
                     )}
                   </div>
 
-                  {/* PSS-10 Chart */}
+                  {/* PSS-10 Chart - Only show if history has PSS-10 data */}
+                  {questionnaireHistory.some(item => item.pss10) && (
                   <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                       <span className="w-3 h-3 bg-teal-600 rounded-full"></span>
@@ -810,7 +866,7 @@ const MentalHealthQuestionnaire = () => {
                         }
                       }} />
                     </div>
-                    {questionnaireHistory.length > 0 && (
+                    {questionnaireHistory.length > 0 && questionnaireHistory[questionnaireHistory.length - 1].pss10 && (
                       <div className="mt-4 flex justify-between items-center text-sm">
                         <span className="text-gray-600">
                           Latest: <span className="font-bold text-teal-600">{questionnaireHistory[questionnaireHistory.length - 1].pss10.score}/40</span>
@@ -821,8 +877,10 @@ const MentalHealthQuestionnaire = () => {
                       </div>
                     )}
                   </div>
+                  )}
 
-                  {/* DASS-21 Chart */}
+                  {/* DASS-21 Chart - Only show if history has DASS-21 data */}
+                  {questionnaireHistory.some(item => item.dass21) && (
                   <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-6 shadow-lg">
                     <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                       <span className="w-3 h-3 bg-pink-600 rounded-full"></span>
@@ -844,7 +902,7 @@ const MentalHealthQuestionnaire = () => {
                         }
                       }} />
                     </div>
-                    {questionnaireHistory.length > 0 && (
+                    {questionnaireHistory.length > 0 && questionnaireHistory[questionnaireHistory.length - 1].dass21 && (
                       <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
                         <div className="text-center">
                           <p className="text-gray-600">Depression</p>
@@ -861,6 +919,7 @@ const MentalHealthQuestionnaire = () => {
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
               </div>
 
@@ -893,19 +952,23 @@ const MentalHealthQuestionnaire = () => {
                         <p className="text-2xl font-bold text-blue-600">{item.gad7.score}/21</p>
                         <p className="text-sm text-gray-600">{item.gad7.severity}</p>
                       </div>
-                      <div className="bg-teal-50 rounded-xl p-4 border-2 border-teal-200">
-                        <p className="text-sm text-gray-600 mb-1">PSS-10</p>
-                        <p className="text-2xl font-bold text-teal-600">{item.pss10.score}/40</p>
-                        <p className="text-sm text-gray-600">{item.pss10.severity}</p>
-                      </div>
-                      <div className="bg-pink-50 rounded-xl p-4 border-2 border-pink-200">
-                        <p className="text-sm text-gray-600 mb-1">DASS-21</p>
-                        <div className="space-y-1">
-                          <p className="text-sm font-bold text-pink-600">D: {item.dass21.depression.score} ({item.dass21.depression.severity})</p>
-                          <p className="text-sm font-bold text-orange-600">A: {item.dass21.anxiety.score} ({item.dass21.anxiety.severity})</p>
-                          <p className="text-sm font-bold text-purple-600">S: {item.dass21.stress.score} ({item.dass21.stress.severity})</p>
+                      {item.pss10 && (
+                        <div className="bg-teal-50 rounded-xl p-4 border-2 border-teal-200">
+                          <p className="text-sm text-gray-600 mb-1">PSS-10</p>
+                          <p className="text-2xl font-bold text-teal-600">{item.pss10.score}/40</p>
+                          <p className="text-sm text-gray-600">{item.pss10.severity}</p>
                         </div>
-                      </div>
+                      )}
+                      {item.dass21 && (
+                        <div className="bg-pink-50 rounded-xl p-4 border-2 border-pink-200">
+                          <p className="text-sm text-gray-600 mb-1">DASS-21</p>
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold text-pink-600">D: {item.dass21.depression.score} ({item.dass21.depression.severity})</p>
+                            <p className="text-sm font-bold text-orange-600">A: {item.dass21.anxiety.score} ({item.dass21.anxiety.severity})</p>
+                            <p className="text-sm font-bold text-purple-600">S: {item.dass21.stress.score} ({item.dass21.stress.severity})</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -1339,6 +1402,176 @@ const MentalHealthQuestionnaire = () => {
               </motion.div>
             </div>
 
+            {/* AI Report Section */}
+            {generatingReport && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border-2 border-purple-200"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                  <p className="text-purple-600 font-semibold">Generating your personalized AI report...</p>
+                </div>
+              </motion.div>
+            )}
+
+            {aiReport && !generatingReport && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 space-y-6"
+              >
+                {/* Overall Summary */}
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border-2 border-purple-200">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <span className="text-3xl">🤖</span>
+                    AI-Powered Insights
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed">{aiReport.overallSummary}</p>
+                </div>
+
+                {/* Depression Section */}
+                {aiReport.depression && (
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-purple-100">
+                    <h3 className="text-xl font-bold text-purple-600 mb-3">😔 Depression Analysis</h3>
+                    <p className="text-gray-700 mb-4">{aiReport.depression.analysis}</p>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">💡 Recommendations:</h4>
+                        <ul className="space-y-2">
+                          {aiReport.depression.recommendations?.map((rec, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-purple-500 mt-1">•</span>
+                              <span className="text-gray-700">{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">🛠️ Coping Strategies:</h4>
+                        <ul className="space-y-2">
+                          {aiReport.depression.copingStrategies?.map((strategy, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-purple-500 mt-1">✓</span>
+                              <span className="text-gray-700">{strategy}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Anxiety Section */}
+                {aiReport.anxiety && (
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-blue-100">
+                    <h3 className="text-xl font-bold text-blue-600 mb-3">😰 Anxiety Analysis</h3>
+                    <p className="text-gray-700 mb-4">{aiReport.anxiety.analysis}</p>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">💡 Recommendations:</h4>
+                        <ul className="space-y-2">
+                          {aiReport.anxiety.recommendations?.map((rec, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-blue-500 mt-1">•</span>
+                              <span className="text-gray-700">{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">🛠️ Coping Strategies:</h4>
+                        <ul className="space-y-2">
+                          {aiReport.anxiety.copingStrategies?.map((strategy, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-blue-500 mt-1">✓</span>
+                              <span className="text-gray-700">{strategy}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Stress Section */}
+                {aiReport.stress && (
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-teal-100">
+                    <h3 className="text-xl font-bold text-teal-600 mb-3">😓 Stress Analysis</h3>
+                    <p className="text-gray-700 mb-4">{aiReport.stress.analysis}</p>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">💡 Recommendations:</h4>
+                        <ul className="space-y-2">
+                          {aiReport.stress.recommendations?.map((rec, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-teal-500 mt-1">•</span>
+                              <span className="text-gray-700">{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">🛠️ Coping Strategies:</h4>
+                        <ul className="space-y-2">
+                          {aiReport.stress.copingStrategies?.map((strategy, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-teal-500 mt-1">✓</span>
+                              <span className="text-gray-700">{strategy}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Next Steps */}
+                {aiReport.nextSteps && aiReport.nextSteps.length > 0 && (
+                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-2xl p-6 border-2 border-green-200">
+                    <h3 className="text-xl font-bold text-green-700 mb-4">🎯 Your Next Steps</h3>
+                    <ol className="space-y-3">
+                      {aiReport.nextSteps.map((step, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <span className="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
+                            {idx + 1}
+                          </span>
+                          <span className="text-gray-700 pt-1">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {/* Professional Help Recommendation */}
+                {aiReport.professionalHelpRecommended && (
+                  <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
+                    <div className="flex items-start gap-3">
+                      <span className="text-3xl">⚠️</span>
+                      <div>
+                        <h3 className="text-xl font-bold text-red-700 mb-2">Professional Support Recommended</h3>
+                        <p className="text-gray-700">
+                          Based on your assessment results, we strongly recommend consulting with a mental health professional. 
+                          They can provide personalized treatment and support tailored to your specific needs.
+                        </p>
+                        <p className="text-gray-700 mt-3 font-semibold">
+                          If you're in crisis, please contact a crisis helpline immediately (988 in the US).
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -1357,7 +1590,12 @@ const MentalHealthQuestionnaire = () => {
   const questions = getCurrentQuestions();
   const currentAnswers = getCurrentAnswers();
   const progress = ((currentScale * 25) + ((currentQuestion + 1) / questions.length) * 25);
-  const totalQuestions = phq9Questions.length + gad7Questions.length + pss10Questions.length + dass21Questions.length;
+  
+  // Calculate total questions based on assessment mode
+  const totalQuestions = assessmentMode === 'quick' 
+    ? phq9Questions.length + gad7Questions.length  // Quick: 9 + 7 = 16
+    : phq9Questions.length + gad7Questions.length + pss10Questions.length + dass21Questions.length; // Detailed: 9 + 7 + 10 + 21 = 47
+  
   const answeredQuestions = Object.values(answers).flat().filter(a => a !== undefined).length;
 
   return (

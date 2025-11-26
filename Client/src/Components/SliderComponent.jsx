@@ -1,32 +1,37 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
+import mh1 from "../assets/mental_health_1.png";
+import mh3 from "../assets/mental_health_3.png";
+import mh4 from "../assets/mental_health_4.png";
+import mh5 from "../assets/mental_health_5.png";
+
 const imageColumns = [
- 
   [
-    { src: "/src/assets/1.jpg" },
-    { src: "/src/assets/2.jpg" },
-    { src: "/src/assets/3.jpg" },
-    { src: "/src/assets/7.jpg" },
-    { src: "/src/assets/5.jpg" },
-    { src: "/src/assets/6.jpg" },
+    { src: mh1 },
+    { src: mh3 },
+    { src: mh4 },
+    { src: mh5 },
+    { src: mh1 },
+    { src: mh3 },
   ],
-   [ { src: "/src/assets/1.jpg" },
-    { src: "/src/assets/2.jpg" },
-    { src: "/src/assets/3.jpg" },
-    { src: "/src/assets/7.jpg" },
-    { src: "/src/assets/5.jpg" },
-    { src: "/src/assets/6.jpg" },
+  [
+    { src: mh4 },
+    { src: mh5 },
+    { src: mh1 },
+    { src: mh3 },
+    { src: mh4 },
+    { src: mh5 },
   ],
-   [ { src: "/src/assets/1.jpg" },
-    { src: "/src/assets/2.jpg" },
-    { src: "/src/assets/3.jpg" },
-    { src: "/src/assets/7.jpg" },
-    { src: "/src/assets/5.jpg" },
-    { src: "/src/assets/6.jpg" },
+  [
+    { src: mh1 },
+    { src: mh3 },
+    { src: mh4 },
+    { src: mh5 },
+    { src: mh1 },
+    { src: mh3 },
   ],
-  
-]
+];
 
 const squareSize = 175;
 

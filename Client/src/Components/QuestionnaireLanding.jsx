@@ -152,34 +152,118 @@ const QuestionnaireLanding = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+      {/* Assessment Mode Selection */}
+      <div className="max-w-6xl mx-auto px-4 py-20">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-r from-purple-600 to-blue-500 rounded-3xl p-12 shadow-2xl"
+          className="text-center mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Begin?
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            Choose Your Assessment
           </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Start your mental health assessment now. It only takes a few minutes,
-            and you can complete it without creating an account.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Select the assessment that fits your time and needs
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/MentalHealthQuestionnaire")}
-            className="px-10 py-4 rounded-xl text-purple-600 bg-white hover:bg-gray-50 transition-all duration-300 font-semibold text-lg shadow-lg"
-          >
-            Start Assessment Now
-          </motion.button>
         </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Quick Assessment */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.02, y: -5 }}
+            className="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-purple-200"
+          >
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6">
+              <FaClipboardCheck className="text-3xl text-white" />
+            </div>
+            
+            <h3 className="text-3xl font-bold text-gray-800 mb-3">Quick Assessment</h3>
+            <p className="text-lg text-gray-600 mb-6">Perfect when you're short on time</p>
+            
+            <div className="space-y-3 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <p className="text-gray-700"><span className="font-semibold">16 questions</span> • ~5 minutes</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <p className="text-gray-700">Depression & Anxiety screening</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <p className="text-gray-700">AI-powered recommendations</p>
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/MentalHealthQuestionnaire", { state: { mode: "quick" } })}
+              className="w-full px-8 py-4 rounded-xl text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 transition-all duration-300 font-semibold text-lg shadow-lg"
+            >
+              Start Quick Assessment
+            </motion.button>
+          </motion.div>
+
+          {/* Detailed Assessment */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.02, y: -5 }}
+            className="bg-gradient-to-br from-purple-600 to-blue-500 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-purple-400 relative overflow-hidden"
+          >
+            <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
+              Recommended
+            </div>
+            
+            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+              <FaChartLine className="text-3xl text-white" />
+            </div>
+            
+            <h3 className="text-3xl font-bold text-white mb-3">Detailed Assessment</h3>
+            <p className="text-lg text-white/90 mb-6">Comprehensive mental health evaluation</p>
+            
+            <div className="space-y-3 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <p className="text-white"><span className="font-semibold">47 questions</span> • ~15 minutes</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <p className="text-white">Depression, Anxiety & Stress analysis</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <p className="text-white">Comprehensive AI-powered report</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <p className="text-white">Detailed coping strategies</p>
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/MentalHealthQuestionnaire", { state: { mode: "detailed" } })}
+              className="w-full px-8 py-4 rounded-xl text-purple-600 bg-white hover:bg-gray-50 transition-all duration-300 font-semibold text-lg shadow-lg"
+            >
+              Start Detailed Assessment
+            </motion.button>
+          </motion.div>
+        </div>
+
+        <p className="text-center text-gray-500 mt-8">
+          No login required to start • Sign in to save and track your progress
+        </p>
       </div>
     </div>
   );
 };
 
 export default QuestionnaireLanding;
-
