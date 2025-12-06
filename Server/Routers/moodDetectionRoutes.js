@@ -1,18 +1,18 @@
 const express = require('express');
-const router = express.Router();
+const moodDetectionRouter = express.Router();
 const { analyzeMood, getMoodHistory, getCurrentMood } = require('../Controllers/MoodDetectionController');
 const { isAuthenticated } = require('../Middleware/authMiddleware');
 
 // All routes require authentication
-router.use(isAuthenticated);
+moodDetectionRouter.use(isAuthenticated);
 
 // POST /api/mood-detection/analyze - Analyze mood from image
-router.post('/analyze', analyzeMood);
+moodDetectionRouter.post('/analyze', analyzeMood);
 
 // GET /api/mood-detection/history - Get mood history
-router.get('/history', getMoodHistory);
+moodDetectionRouter.get('/history', getMoodHistory);
 
 // GET /api/mood-detection/current - Get current (latest) mood
-router.get('/current', getCurrentMood);
+moodDetectionRouter.get('/current', getCurrentMood);
 
 module.exports = moodDetectionRouter;
