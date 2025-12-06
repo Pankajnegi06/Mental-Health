@@ -15,4 +15,4 @@ router.get('/history', getMoodHistory);
 // GET /api/mood-detection/current - Get current (latest) mood
 router.get('/current', getCurrentMood);
 
-module.exports = router;
+module.exports = moodDetectionRouter;
